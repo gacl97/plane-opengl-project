@@ -34,16 +34,14 @@ void resize(int width, int height) {
   glTranslatef(-1.0, 0.0, -5.0);
 }
 
+const GLfloat light_ambient[]  = { 0.1f, 0.1f, 0.1f, 0.1f};
+const GLfloat light_diffuse[]  = { 0.8f, 0.8f, 0.8f, 0.8f};
+const GLfloat light_specular[] = { 0.1f, 0.1f, 0.1f, 0.1f};
+const GLfloat light_position[] = { 100.0f, 0.0f, -100.0f, 1.0f};
 
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 50.0f, 50.0f, 5.0f, 0.0f };
-
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat high_shininess[] = { 100.0f };
+const GLfloat light_diffuse1[]  = { 1.f, 1.f, 1.f };
+const GLfloat light_specular1[] = { 0.0f, 0.0f, 0.0f };
+const GLfloat light_position1[] = { 0.0f, 18.0f, 0.0f, 1.0f };
 
 float last_mouse_position = 0.0;
 bool first_mouse_movement = true;
@@ -331,6 +329,20 @@ void draw(){
 
   createFloor();
 
+  glMaterialfv(GL_LIGHT1, GL_SPECULAR, light_specular1);
+  glLightfv(GL_LIGHT1, GL_POSITION, light_position1);
+  glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse1);
+
+  glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+  
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  glEnable(GL_LIGHT1);
+  glEnable(GL_COLOR_MATERIAL);
+
   // Desenha os prédios
   for(int i = 0; i < buildings.size(); ++i) {
     glPushMatrix();
@@ -401,21 +413,6 @@ void initial_config(GLFWwindow* window) {
   glEnable(GL_DEPTH_TEST);
 
   glDepthFunc(GL_LESS);
-  
-  glEnable(GL_LIGHT0);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_COLOR_MATERIAL);
-  glEnable(GL_LIGHTING);
-
-  glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
-  glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-  glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-  glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
     
   mappingBuildings();
 
