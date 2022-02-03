@@ -34,10 +34,11 @@ void resize(int width, int height) {
   glTranslatef(-1.0, 0.0, -5.0);
 }
 
+
 const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
 const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+const GLfloat light_position[] = { 50.0f, 50.0f, 5.0f, 0.0f };
 
 const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
 const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -65,16 +66,6 @@ vertex3 plane_velocity = vertex3(0, 0, 0);
 vertex3 look;
 
 float plane_angle = 0.0;
-
-GLuint loadTexture(const char* texture_file) {
-  GLuint texture = SOIL_load_OGL_texture(texture_file, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_INVERT_Y);
-
-  if (!texture) {
-    printf("Erro ao carregar imagem\n");
-  }
-
-  return texture;
-}
 
 float degreesToRadians(float angle) {
   return (angle * 3.14) / 180.0;
@@ -104,7 +95,7 @@ void move_plane_forward(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *p
   look = *plane_position + *plane_direction;
 
   gluLookAt(plane_position->x, plane_position->y, plane_position->z, look.x, look.y, look.z, plane_up->x, plane_up->y, plane_up->z);
-  camera.move_right();
+  camera.move_forward();
 }
 
 void move_plane_right(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *plane_position, vertex3 *plane_direction, vertex3 *plane_up) {
@@ -130,7 +121,7 @@ void move_plane_right(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *pla
   printf("DIRECTION X: %.2f Y: %.2f Z: %.2f\n", plane_direction->x, plane_direction->y, plane_direction->z);
   
   gluLookAt(plane_position->x, plane_position->y, plane_position->z, look.x, look.y, look.z, plane_up->x, plane_up->y, plane_up->z);
-  camera.move_back();
+  camera.move_right();
   camera.update_yaw(aux);
   camera.update_direction_vertex();
 }
@@ -158,7 +149,7 @@ void move_plane_left(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *plan
   printf("DIRECTION X: %.2f Y: %.2f Z: %.2f\n", plane_direction->x, plane_direction->y, plane_direction->z);
   
   gluLookAt(plane_position->x, plane_position->y, plane_position->z, look.x, look.y, look.z, plane_up->x, plane_up->y, plane_up->z);
-  camera.move_forward();
+  camera.move_left();
   camera.update_yaw(aux);
   camera.update_direction_vertex();
 }
@@ -192,8 +183,6 @@ void move_plane_down(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *plan
 }
 
 void singleBuilding(){
-  // glColor3d(r[R % 11], g[G % 11], b[B % 11]);
-
   // Componente do prédio
   glColor3d(1, 1, 1);
   glPushMatrix();
@@ -286,7 +275,14 @@ void plane() {
   glColor3d(0.5, 0.5, 0.5);
   glPushMatrix();
     glTranslated(0,0,0);
-    glScaled(3,0.4,0.5);
+    glScaled(3.5, 0.4, 0.7);
+    glutSolidSphere(1, 10, 2); // Esfera esticada
+  glPopMatrix();
+
+  glColor3d(0.5, 0.5, 0.5);
+  glPushMatrix();
+    glTranslated(-0.5,0,0);
+    glScaled(3.5, 0.4, 0.7);
     glutSolidSphere(1, 10, 2); // Esfera esticada
   glPopMatrix();
 
@@ -299,28 +295,12 @@ void plane() {
     glutSolidSphere(0.40, 10, 10);
   glPopMatrix();
 
-  // Asa direita
+  // Asa
   glColor3d(0.5, 0.5, 0.5);
   glPushMatrix();
-    glTranslated(-1.5, 0, 0.9); // Movimenta o objeto pra frente, trás ou cima
-    // glRotated(0,0,1,0);
-    glScaled(2, 0.1, 1); // x = largura do obj y = espessura
-    // glRotated(180,1,0,1);
-    // glRotated(45,0,0,0);
-    // glRotatef(180, 0.0f, 0.0f, 2.0f);
-    glRotated(199, 1.0, 0.0, 0.0);
-    glRotated(330,0,1,0);
-    // glRotatef(30, 0, 1, 0);
-    glutSolidCone(1, 1, 2, 2);
-  glPopMatrix();
-
-  // Asa Esquerda
-  glColor3d(0.5, 0.5, 0.5);
-  glPushMatrix();
-    glTranslated(-1.5,0, -0.8); // Movimenta o objeto pra frente, trás ou cima (-0.8)
-    // glRotated(0,0,1,0);
-    glScaled(2, 0.1, 1); // x = largura do obj y = espessura
-    glRotated(-25, 0, 1, 0);
+    glTranslated(-3,0, -0); // Movimenta o objeto pra frente, trás ou cima (-0.8)
+    glScaled(4, 3, 3); // x = largura do obj y = espessura
+    glRotated(90, 0, 1, 0);
     glutSolidCone(1, 1, 2, 2);
   glPopMatrix();
 
@@ -335,15 +315,13 @@ void plane() {
   glPopMatrix();
 }
 
-void createFloor(){
-
-  glColor3d(0, 0.5, 0.1);
+void createFloor() {
+ 
+  glColor3d(0.3, 0.3, 0.3);  
   glPushMatrix();
-    glTranslated(0, -20, 0);
+    glTranslated(0, -1, 0);
     glScaled(2000, 0.9, 2000);
     glRotated(0, 0, 0, 0);
-    // glEnable(GL_TEXTURE_2D);
-    // glBindTexture(GL_TEXTURE_2D, loadTexture(img_directory));
     glutSolidCube(1);
   glPopMatrix();
 }
@@ -364,12 +342,12 @@ void draw(){
   glPushMatrix();
     glTranslated(camera.position.x, camera.position.y, camera.position.z);
     glRotatef(plane_inclination, 0, camera.position.y, 0);
-    // glRotatef(plane_inclination, 0, 1, 0);
     plane();
   glPopMatrix();
 
   move_plane_forward(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
 }
+
 
 void controlRotation(GLFWwindow *window, int key, int scanCode, int action, int mod){
 
@@ -378,10 +356,9 @@ void controlRotation(GLFWwindow *window, int key, int scanCode, int action, int 
   // Mover avião para cima
   if (key == GLFW_KEY_W) {
     // move_plane_forward(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
-    // move_plane_up(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
+    move_plane_up(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
   // Mover avião para baixo
   } else if (key == GLFW_KEY_S) {
-    // camera.move_left();
     move_plane_down(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
   // Mover avião para esquerda
   } else if (key == GLFW_KEY_A) {
@@ -389,9 +366,7 @@ void controlRotation(GLFWwindow *window, int key, int scanCode, int action, int 
   // Mover avião para direita
   } else if (key == GLFW_KEY_D) {
     move_plane_right(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
-  } else if(key == GLFW_KEY_X) {
-    move_plane_up(&plane_velocity, &plane_left, &plane_position, &plane_direction, &plane_up);
-  }
+  } 
 }
 
 void cursor_callback(GLFWwindow* window, double x_pos, double y_pos) {
@@ -426,7 +401,7 @@ void initial_config(GLFWwindow* window) {
   glEnable(GL_DEPTH_TEST);
 
   glDepthFunc(GL_LESS);
-
+  
   glEnable(GL_LIGHT0);
   glEnable(GL_NORMALIZE);
   glEnable(GL_COLOR_MATERIAL);
@@ -447,7 +422,8 @@ void initial_config(GLFWwindow* window) {
   vertex3 look = camera.position + camera.direction;
   gluLookAt(camera.position.x, camera.position.y, camera.position.z, look_x, look_y, look_z, camera.up.x, camera.up.y, camera.up.z);
   // Cor de fundo
-  glClearColor(0.0, 0.0, 0.0, 0.1);
+  // glClearColor(0.0, 0.0, 0.0, 0.1);
+  glClearColor(0.64,0.76,0.84,0.1);
   glEnable(GL_TEXTURE_2D);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }

@@ -9,7 +9,6 @@ class Camera {
     public:
         vertex3 position;
         vertex3 direction;
-        vertex3 direction2;
         vertex3 left;
         vertex3 up;
         vertex3 velocity;
@@ -18,11 +17,11 @@ class Camera {
         float yaw;
         
         Camera(vertex3 position);
+        Camera();
         ~Camera();
         void activate();
 
         void move_forward();
-        void move_back();
         void move_left();
         void move_right();
         void move_up();

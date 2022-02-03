@@ -7,7 +7,6 @@
 Camera::Camera(vertex3 initial_position) {
   position = vertex3(initial_position);
   direction = vertex3(0, 0, -1);
-  direction2 = vertex3(0, 0, -1);
   left = vertex3(-1, 0, 0);
   up = vertex3(0, 1, 0);
   velocity = vertex3(0, 0, 0);
@@ -23,22 +22,17 @@ void Camera::activate() {
   gluLookAt(position.x, position.y, position.z, look.x, look.y, look.z, up.x, up.y, up.z);
 }
 
-void Camera::move_forward() {
+void Camera::move_left() {
   velocity = direction * scale;
   position = position + velocity;
 }
 
-void Camera::move_back() {
+void Camera::move_right() {
   velocity = direction * (-scale);
   position = position + velocity;
 }
 
-void Camera::move_left() {
-  velocity = left * scale;
-  position = position + velocity;
-}
-
-void Camera::move_right() {
+void Camera::move_forward() {
   velocity = left * (-scale);
   position = position + velocity;
 }
@@ -73,14 +67,11 @@ float Camera::degreesToRadians(float angle) {
 }
 
 void Camera::update_yaw(float d_yaw) {
-  // printf("%.2f\n", d_yaw);
   yaw += d_yaw;
 }
 
 void Camera::update_direction_vertex() {
-  // printf("YAW camera: %.2f\n", yaw);
   float angle = degreesToRadians(yaw);
-  // printf("Angle camera: %.2f\n", angle);
 
   direction.x = sin(angle);
   direction.z = -cos(angle);
@@ -91,15 +82,10 @@ void Camera::update_direction_vertex() {
 }
 
 void Camera::update_direction_vertex2() {
-  // printf("YAW camera: %.2f\n", yaw);
   float angle = degreesToRadians(yaw);
-  // printf("Angle camera: %.2f\n", angle);
 
   direction.x = sin(angle);
   direction.z = -cos(angle);
   direction.normalize();
-
-  // Comentando a câmera gira em torno do avião
-  // left = up.vector_product(direction);
 }
 
