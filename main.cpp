@@ -7,15 +7,17 @@
 #include "./Camera/Camera.h"
 #include "./Building/BuildingMap.h"
 #include <SOIL/SOIL.h>
+#include "./stb_image/stb_image.h"
 
 #include "vertex.h"
+#include "texture.h"
 
 #include <GL/glut.h>
 
 using namespace std;
 
 // Compilar
-// g++ main.cpp ./Camera/Camera.h ./Camera/Camera.cpp ./Building/BuildingMap.cpp ./Building/BuildingMap.h -o a -lglut -lglfw -lGLEW -lGL -lGLU -lm -lSOIL
+// g++ main.cpp ./Camera/Camera.h ./Camera/Camera.cpp ./Building/BuildingMap.cpp ./Building/BuildingMap.h ./stb_image/stb_image.cpp ./stb_image/stb_image.h -o a -lglut -lglfw -lGLEW -lGL -lGLU -lm -lSOIL
 
 #define WINDOW_WIDTH 1300
 #define WINDOW_HEIGHT 800
@@ -32,6 +34,50 @@ void resize(int width, int height) {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(-1.0, 0.0, -5.0);
+}
+
+struct Object {
+  GLuint id;
+  vertex3 position;
+  Object(): id(0), position(vertex3(0.0, 0.0, 0.0)) {}  
+};
+
+Object floor_object;
+Texture floor_texture;
+Texture plane_texture;
+
+vector<Texture> building_textures;
+
+Texture load_texture(basic_string<char> file_path, Texture texture) {
+  unsigned char* img_data;
+
+  stbi_set_flip_vertically_on_load(true);
+  img_data = stbi_load(file_path.c_str(), &texture.largura, &texture.altura, &texture.canais, 4);
+
+  if (img_data) {
+    glGenTextures(1, &texture.id);
+    cout << "ID: " << texture.id << endl;
+    cout << "Largura: " << texture.largura << endl;
+    cout << "Altura: " << texture.altura << endl;
+    cout << "Canais: " << texture.canais << endl;
+    glBindTexture(GL_TEXTURE_2D, texture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture.largura, texture.altura, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    stbi_image_free(img_data);
+
+    return texture;
+  } else {
+    cout << "Erro ao ler img!" << endl;
+    return texture;
+  }
 }
 
 const GLfloat light_ambient[]  = { 0.1f, 0.1f, 0.1f, 0.1f};
@@ -114,10 +160,6 @@ void move_plane_right(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *pla
 
   look = *plane_position + *plane_direction;
 
-  printf("POSITION X: %.2f Y: %.2f Z: %.2f\n", plane_position->x, plane_position->y, plane_position->z);
-  printf("LOOK: X: %.2f Y: %.2f Z: %.2f\n", look.x, look.y, look.z);
-  printf("DIRECTION X: %.2f Y: %.2f Z: %.2f\n", plane_direction->x, plane_direction->y, plane_direction->z);
-  
   gluLookAt(plane_position->x, plane_position->y, plane_position->z, look.x, look.y, look.z, plane_up->x, plane_up->y, plane_up->z);
   camera.move_right();
   camera.update_yaw(aux);
@@ -142,10 +184,6 @@ void move_plane_left(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *plan
 
   look = *plane_position + *plane_direction;
 
-  printf("POSITION X: %.2f Y: %.2f Z: %.2f\n", plane_position->x, plane_position->y, plane_position->z);
-  printf("LOOK: X: %.2f Y: %.2f Z: %.2f\n", look.x, look.y, look.z);
-  printf("DIRECTION X: %.2f Y: %.2f Z: %.2f\n", plane_direction->x, plane_direction->y, plane_direction->z);
-  
   gluLookAt(plane_position->x, plane_position->y, plane_position->z, look.x, look.y, look.z, plane_up->x, plane_up->y, plane_up->z);
   camera.move_left();
   camera.update_yaw(aux);
@@ -180,79 +218,121 @@ void move_plane_down(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *plan
   camera.move_down();
 }
 
-void singleBuilding(){
-  // Componente do prédio
+void create_face(vertex3 v1, vertex3 v2, vertex3 v3, vertex3 v4) {
   glColor3d(1, 1, 1);
+  glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0);  glVertex3fv(&v1.x);
+    glTexCoord2f(1.0, 0.0);  glVertex3fv(&v2.x);
+    glTexCoord2f(1.0, 1.0);  glVertex3fv(&v3.x);
+    glTexCoord2f(0.0, 1.0);  glVertex3fv(&v4.x);
+glEnd();
+}
+
+void singleBuilding(Texture building_texture){
+
+  vertex3 v1(-3, 3, 3);
+  vertex3 v2(-3, -3, 3);
+  vertex3 v3(3, -3, 3);
+  vertex3 v4(3, 3, 3);
+
+  vertex3 v5(3, 3, -3);
+  vertex3 v6(3, -3, -3);
+  vertex3 v7(-3, -3, -3);
+  vertex3 v8(-3, 3, -3);
+
+  // Componente do prédio
   glPushMatrix();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, building_texture.id);
     glTranslated(0, 0, 0);
-    glutSolidCube(4);
+    glNormal3f(0.f, 0.f, 0.f);
+      // Face da frente
+      glNormal3f(0.f, 0.f, 1.f);
+      create_face(v1, v2, v3, v4);
+
+      // Face da direita
+      glNormal3f(1.f, 0.f, 1.f);
+      create_face(v4, v3 ,v6, v5);
+
+      // Face de trás
+      glNormal3f(0.f, 0.f, -1.f);
+      create_face(v5, v8, v7, v6);
+
+      // Face da esquerda
+      glNormal3f(-1.f, 0.f, 0.f);
+      create_face(v1, v8, v7, v2);
+
+      // Face do topo
+      glNormal3f(0.f, 0.f, 0.f);
+      create_face(v1, v4, v5, v8);
+    glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 
   // Janelas
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(1.8, 0, 1);
+    glTranslated(2.8, 0, 1);
     glScaled(0.6, 0.6, 1.001);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(-1.8, 0, 1);
+    glTranslated(-2.8, 0, 1);
     glScaled(0.6, 0.6, 1.001);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(1.8, 0, -1);
+    glTranslated(2.8, 0, -1);
     glScaled(0.6, 0.6, 1.001);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(-1.8, 0, -1);
+    glTranslated(-2.8, 0, -1);
     glScaled(0.6, 0.6, 1.001);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(1, 0, 1.8);
+    glTranslated(1, 0, 2.8);
     glScaled(1.001, 0.6, 0.6);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(1, 0, -1.8);
+    glTranslated(1, 0, -2.8);
     glScaled(1.001, 0.6, 0.6);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(-1, 0, 1.8);
+    glTranslated(-1, 0, 2.8);
     glScaled(1.001, 0.6, 0.6);
     glutSolidCube(1);
   glPopMatrix();
 
   glColor3d(0,0,0);
   glPushMatrix();
-    glTranslated(-1, 0, -1.8);
+    glTranslated(-1, 0, -2.8);
     glScaled(1.001, 0.6, 0.6);
     glutSolidCube(1);
   glPopMatrix();
 }
 
 // Cria uma linha de prédios
-void createBuildings(int height){
+void createBuildings(int height, Texture building_texture){
 
   for(int i = 0; i < height; ++i){
     glPushMatrix();
       glTranslated(0, 0.8 + i, -20);
-      singleBuilding();
+      singleBuilding(building_texture);
     glPopMatrix();
   }
 }
@@ -261,7 +341,7 @@ void mappingBuildings() {
 
   for(int i = 0; i < 300; i += 8) {
     for(int j = 0; j < 200; j += 10) {
-      Building building(i, j, (rand() % 25) + 1);
+      Building building(i, j, (rand() % 25) + 1, building_textures[rand() % 14]);
       buildings.push_back(building);
     }
   }
@@ -272,16 +352,13 @@ void plane() {
   // Corpo
   glColor3d(0.5, 0.5, 0.5);
   glPushMatrix();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, plane_texture.id);
     glTranslated(0,0,0);
     glScaled(3.5, 0.4, 0.7);
     glutSolidSphere(1, 10, 2); // Esfera esticada
-  glPopMatrix();
-
-  glColor3d(0.5, 0.5, 0.5);
-  glPushMatrix();
-    glTranslated(-0.5,0,0);
-    glScaled(3.5, 0.4, 0.7);
-    glutSolidSphere(1, 10, 2); // Esfera esticada
+    glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 
   // Cabine
@@ -294,12 +371,18 @@ void plane() {
   glPopMatrix();
 
   // Asa
-  glColor3d(0.5, 0.5, 0.5);
   glPushMatrix();
-    glTranslated(-3,0, -0); // Movimenta o objeto pra frente, trás ou cima (-0.8)
-    glScaled(4, 3, 3); // x = largura do obj y = espessura
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, plane_texture.id);
+    glTranslated(-0.5, 0, -0); // Movimenta o objeto pra frente, trás ou cima (-0.8)
     glRotated(90, 0, 1, 0);
-    glutSolidCone(1, 1, 2, 2);
+    glRotated(90, 1, 0, 0);
+    glBegin(GL_TRIANGLES);
+      glTexCoord2f(0.0, 0.0); glVertex3f(-2.5, -2.5, 0.0);
+      glTexCoord2f(1.0, 0.0); glVertex3f(2.5, -2.5, 0.0);
+      glTexCoord2f(0.5, 1.0); glVertex3f(0.0, 2, 0.0);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 
   // Asa de cima
@@ -314,17 +397,23 @@ void plane() {
 }
 
 void createFloor() {
- 
-  glColor3d(0.3, 0.3, 0.3);  
+
+  vertex3 v1(-2000, 1, 2000);
+  vertex3 v2(2000, 1, 2000);
+  vertex3 v3(2000, 1, -2000);
+  vertex3 v4(-2000, 1, -2000);
+
   glPushMatrix();
-    glTranslated(0, -1, 0);
-    glScaled(2000, 0.9, 2000);
-    glRotated(0, 0, 0, 0);
-    glutSolidCube(1);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, floor_texture.id);
+    glTranslated(0, -2, 0);
+    glNormal3f(0.f, 0.f, 0.f);
+    create_face(v1, v2, v3, v4);
+    glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 }
 
-void draw(){
+void draw() {
   camera.activate();
 
   createFloor();
@@ -347,7 +436,7 @@ void draw(){
   for(int i = 0; i < buildings.size(); ++i) {
     glPushMatrix();
       glTranslated(buildings[i].x, 0, buildings[i].y);
-      createBuildings(buildings[i].height);
+      createBuildings(buildings[i].height, buildings[i].texture);
     glPopMatrix();
   }
 
@@ -413,16 +502,42 @@ void initial_config(GLFWwindow* window) {
   glEnable(GL_DEPTH_TEST);
 
   glDepthFunc(GL_LESS);
+
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+  floor_object.id = 1;
+  floor_texture = load_texture("Imgs/floor.png", floor_texture);
+  plane_texture = load_texture("Imgs/plane.jpeg", plane_texture);
+
+  vector<string> file_names;
+
+  file_names.push_back("Imgs/building1.jpg");
+  file_names.push_back("Imgs/building2.png");
+  file_names.push_back("Imgs/building3.jpeg");
+  file_names.push_back("Imgs/building4.jpeg");
+  file_names.push_back("Imgs/building5.jpg");
+  file_names.push_back("Imgs/building6.jpg");
+  file_names.push_back("Imgs/building7.jpeg");
+  file_names.push_back("Imgs/building8.jpg");
+  file_names.push_back("Imgs/building9.jpg");
+  file_names.push_back("Imgs/building10.jpg");
+  file_names.push_back("Imgs/building11.jpg");
+  file_names.push_back("Imgs/building12.jpg");
+  file_names.push_back("Imgs/building13.jpg");
+  file_names.push_back("Imgs/building14.jpeg");
+
+  for(int i = 0; i < 14; ++i) {
+    Texture texture = load_texture(file_names[i], texture);
+    building_textures.push_back(texture);
+  }
     
   mappingBuildings();
 
   vertex3 look = camera.position + camera.direction;
   gluLookAt(camera.position.x, camera.position.y, camera.position.z, look_x, look_y, look_z, camera.up.x, camera.up.y, camera.up.z);
   // Cor de fundo
-  // glClearColor(0.0, 0.0, 0.0, 0.1);
   glClearColor(0.64,0.76,0.84,0.1);
-  glEnable(GL_TEXTURE_2D);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
 int main(int argc, char *argv[]) {
