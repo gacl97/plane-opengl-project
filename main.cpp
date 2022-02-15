@@ -30,7 +30,7 @@ void resize(int width, int height) {
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(100.0, aspect, 0.1, 500.0);
+  gluPerspective(100.0, aspect, 0.1, 900.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(-1.0, 0.0, -5.0);
@@ -45,6 +45,8 @@ struct Object {
 Object floor_object;
 Texture floor_texture;
 Texture plane_texture;
+Texture beach_texture;
+Texture road_texture;
 
 vector<Texture> building_textures;
 
@@ -219,13 +221,13 @@ void move_plane_down(vertex3 *plane_velocity, vertex3 *plane_left, vertex3 *plan
 }
 
 void create_face(vertex3 v1, vertex3 v2, vertex3 v3, vertex3 v4) {
-  glColor3d(1, 1, 1);
+  //glColor3d(1, 1, 1);
   glBegin(GL_QUADS);
     glTexCoord2f(0.0, 0.0);  glVertex3fv(&v1.x);
     glTexCoord2f(1.0, 0.0);  glVertex3fv(&v2.x);
     glTexCoord2f(1.0, 1.0);  glVertex3fv(&v3.x);
     glTexCoord2f(0.0, 1.0);  glVertex3fv(&v4.x);
-glEnd();
+  glEnd();
 }
 
 void singleBuilding(Texture building_texture){
@@ -398,25 +400,53 @@ void plane() {
 
 void createFloor() {
 
-  vertex3 v1(-2000, 1, 2000);
-  vertex3 v2(2000, 1, 2000);
-  vertex3 v3(2000, 1, -2000);
-  vertex3 v4(-2000, 1, -2000);
+  vertex3 v1(-250, 1, 250);
+  vertex3 v2(250, 1, 250);
+  vertex3 v3(250, 1, -250);
+  vertex3 v4(-250, 1, -250);
 
   glPushMatrix();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindTexture(GL_TEXTURE_2D, floor_texture.id);
-    glTranslated(0, -2, 0);
+    glTranslated(180, 0, 0);
+    glNormal3f(0.f, 0.f, 0.f);
+      glNormal3f(0.f, 0.f, 0.f);
+      create_face(v1, v2, v3, v4);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  glPopMatrix(); 
+
+  vertex3 v5(-40, 1, 250);
+  vertex3 v6(40, 1, 250);
+  vertex3 v7(40, 1, -250);
+  vertex3 v8(-40, 1, -250);
+  
+  glPushMatrix();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, beach_texture.id);
+    glTranslated(180, 0, 0);
+    glRotated(90, 0, 1, 0);
+    glTranslated(-580, 0, 0);
+    glTranslated(0, -2.1, 0);
     glNormal3f(0.f, 0.f, 0.f);
     create_face(v1, v2, v3, v4);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  glPopMatrix();
+
+  glPushMatrix();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, road_texture.id);
+    glTranslated(180, 0, 0);
+    glRotated(90, 0, 1, 0);
+    glTranslated(-290, 0, 0);
+    glTranslated(0, -2.1, 0);
+    glNormal3f(0.f, 0.f, 0.f);
+    create_face(v5, v6, v7, v8);
     glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 }
 
 void draw() {
   camera.activate();
-
-  createFloor();
 
   glMaterialfv(GL_LIGHT1, GL_SPECULAR, light_specular1);
   glLightfv(GL_LIGHT1, GL_POSITION, light_position1);
@@ -439,6 +469,12 @@ void draw() {
       createBuildings(buildings[i].height, buildings[i].texture);
     glPopMatrix();
   }
+
+  glPushMatrix();
+    glTranslated(0, -2, 0);
+    glRotatef(0, 0, 0, 0);
+    createFloor();
+  glPopMatrix();
 
   glPushMatrix();
     glTranslated(camera.position.x, camera.position.y, camera.position.z);
@@ -506,8 +542,9 @@ void initial_config(GLFWwindow* window) {
   glEnable(GL_TEXTURE_2D);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-  floor_object.id = 1;
   floor_texture = load_texture("Imgs/floor.png", floor_texture);
+  beach_texture = load_texture("Imgs/beach.jpg", beach_texture);
+  road_texture = load_texture("Imgs/road.jpg", road_texture);
   plane_texture = load_texture("Imgs/plane.jpeg", plane_texture);
 
   vector<string> file_names;
